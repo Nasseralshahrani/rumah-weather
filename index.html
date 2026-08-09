@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>محطة الأرصاد الجوية الذكية</title>
+    <!-- إعدادات تجعل الموقع يفتح كـ تطبيق كامل الشاشة PWA على الجالكسي والآيفون -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            background-color: #0f172a;
+            color: #f8fafc;
+            margin: 0;
+            padding: 25px 15px;
+            direction: rtl;
+        }
+        .app-container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: #1e293b;
+            padding: 25px;
+            border-radius: 30px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            border: 1px solid #334155;
+        }
+        h1 { font-size: 24px; color: #38bdf8; margin: 5px 0 15px 0; }
+        .data-card {
+            background: #0f172a;
+            border-radius: 20px;
+            padding: 18px;
+            margin: 12px 0;
+            border: 1px solid #1e293b;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .icon { font-size: 40px; margin-bottom: 5px; }
+        .title { font-size: 15px; color: #94a3b8; }
+        .value { font-size: 38px; font-weight: bold; margin: 5px 0; }
+        .value.wind { color: #38bdf8; }
+        .value.temp { color: #f43f5e; }
+        .value.dir { color: #10b981; font-size: 34px; }
+        .value.loc { color: #a855f7; font-size: 24px; } 
+        .unit { font-size: 15px; color: #64748b; }
+        .time { font-size: 13px; color: #475569; margin-top: 20px; }
+        .btn-map {
+            display: inline-block;
+            background: #a855f7;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-size: 14px;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <h1>🌤️ محطتي المتكاملة للطقس</h1>
+    
+    <!-- كارت سرعة الرياح -->
+    <div class="data-card">
+        <div class="icon">🌪️</div>
+        <div class="title">سرعة الرياح الحالية</div>
+        <div class="value wind" id="windSpeed">0.0</div>
+        <div class="unit">كيلومتر / ساعة</div>
+    </div>
+
+    <!-- كارت اتجاه الرياح -->
+    <div class="data-card">
+        <div class="icon">Compass🧭</div>
+        <div class="title">اتجاه هبوب الرياح</div>
+        <div class="value dir" id="windDir">جاري القراءة</div>
+        <div class="unit">الاتجاه الجغرافي الرئيسي</div>
+    </div>
+
+    <!-- كارت درجة الحرارة -->
+    <div class="data-card">
+        <div class="icon">🌡️</div>
+        <div class="title">درجة حرارة الجو</div>
+        <div class="value temp" id="temperature">0.0</div>
+        <div class="unit">درجة مئوية °C</div>
+    </div>
+
+    <!-- كارت الموقع الجغرافي -->
+    <div class="data-card">
+        <div class="icon">📍</div>
+        <div class="title">موقع محطة الرصد</div>
+        <div class="value loc" id="stationLocation">جاري جلب الموقع...</div>
+        <a id="mapLink" class="btn-map" href="#" target="_blank" style="display:none;">🗺️ عرض على الخريطة</a>
+    </div>
+
+    <div class="time" id="lastUpdate">جاري الاتصال بمحطة الطقس...</div>
+</div>
+
+<script>
+    // تم وضع رقم الـ Channel ID الخاص بك هنا بنجاح
+    const channelID = "3448604"; 
+
+    function fetchWeatherData() {
+        const url = `https://thingspeak.com{channelID}/feeds.json?results=1&include_location=true`;
+        
+        fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            const lastFeed = data.feeds[0];
+            const channelInfo = data.channel;
+            
+            if (lastFeed) {
+                // 1. جلب سرعة الرياح (field1)
+                const speed = lastFeed.field1 ? parseFloat(lastFeed.field1).toFixed(1) : "0.0";
+                document.getElementById('windSpeed').innerText = speed;
+                
+                // 2. جلب درجة الحرارة (field2)
+                const temp = lastFeed.field2 ? parseFloat(lastFeed.field2).toFixed(1) : "0.0";
+                document.getElementById('temperature').innerText = temp;
+
+                // 3. جلب اتجاه الرياح النصي (field3)
+                const direction = lastFeed.field3 ? lastFeed.field3 : "شمال";
+                document.getElementById('windDir').innerText = direction;
+                
+                // 4. جلب وعرض الموقع الجغرافي الخرائط
+                if (channelInfo.latitude && channelInfo.longitude) {
+                    document.getElementById('stationLocation').innerText = channelInfo.name;
+                    const mapUrl = `https://google.com{channelInfo.latitude},${channelInfo.longitude}`;
+                    const mapBtn = document.getElementById('mapLink');
+                    mapBtn.href = mapUrl;
+                    mapBtn.style.display = 'inline-block';
+                } else {
+                    document.getElementById('stationLocation').innerText = "موقع المحطة نشط";
+                }
+
+                const timeData = new Date(lastFeed.created_at);
+                document.getElementById('lastUpdate').innerText = "آخر تحديث للمحطة: " + timeData.toLocaleTimeString('ar-EG');
+            }
+        })
+        .catch(error => {
+            document.getElementById('lastUpdate').innerText = "خطأ في تحديث البيانات أونلاين";
+        });
+    }
+
+    // تحديث الشاشة تلقائياً كل 15 ثانية
+    fetchWeatherData();
+    setInterval(fetchWeatherData, 15000);
+</script>
+
+</body>
+</html>
