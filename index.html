@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>محطة الأرصاد الجوية الذكية</title>
+    <title>طقس رماح مباشرة</title>
     <!-- إعدادات تجعل الموقع يفتح كـ تطبيق كامل الشاشة PWA على الجالكسي والآيفون -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -26,7 +26,11 @@
             box-shadow: 0 15px 35px rgba(0,0,0,0.5);
             border: 1px solid #334155;
         }
-        h1 { font-size: 24px; color: #38bdf8; margin: 5px 0 15px 0; }
+        /* العنوان الجديد الرئيسي المضاف في القمة */
+        .main-title { font-size: 28px; color: #fbbf24; margin: 10px 0 5px 0; font-weight: 900; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+        /* العنوان الفرعي الجديد */
+        h1 { font-size: 18px; color: #38bdf8; margin: 0 0 20px 0; font-weight: bold; }
+        
         .data-card {
             background: #0f172a;
             border-radius: 20px;
@@ -60,7 +64,10 @@
 <body>
 
 <div class="app-container">
-    <h1>🌤️ محطتي المتكاملة للطقس</h1>
+    <!-- السطر الرئيسي الأول في قمة التطبيق -->
+    <div class="main-title">🪂 طقس رماح مباشرة</div>
+    <!-- السطر الفرعي الثاني المخصص للطيران الشراعي -->
+    <h1>رماح للطيران الشراعي</h1>
     
     <!-- كارت سرعة الرياح -->
     <div class="data-card">
@@ -72,7 +79,7 @@
 
     <!-- كارت اتجاه الرياح -->
     <div class="data-card">
-        <div class="icon">Compass🧭</div>
+        <div class="icon">🧭</div>
         <div class="title">اتجاه هبوب الرياح</div>
         <div class="value dir" id="windDir">جاري القراءة</div>
         <div class="unit">الاتجاه الجغرافي الرئيسي</div>
@@ -98,7 +105,7 @@
 </div>
 
 <script>
-    // تم وضع رقم الـ Channel ID الخاص بك هنا بنجاح
+    // تم ربط معرف قناتك الجاهز تلقائياً
     const channelID = "3448604"; 
 
     function fetchWeatherData() {
@@ -111,19 +118,15 @@
             const channelInfo = data.channel;
             
             if (lastFeed) {
-                // 1. جلب سرعة الرياح (field1)
                 const speed = lastFeed.field1 ? parseFloat(lastFeed.field1).toFixed(1) : "0.0";
                 document.getElementById('windSpeed').innerText = speed;
                 
-                // 2. جلب درجة الحرارة (field2)
                 const temp = lastFeed.field2 ? parseFloat(lastFeed.field2).toFixed(1) : "0.0";
                 document.getElementById('temperature').innerText = temp;
 
-                // 3. جلب اتجاه الرياح النصي (field3)
                 const direction = lastFeed.field3 ? lastFeed.field3 : "شمال";
                 document.getElementById('windDir').innerText = direction;
                 
-                // 4. جلب وعرض الموقع الجغرافي الخرائط
                 if (channelInfo.latitude && channelInfo.longitude) {
                     document.getElementById('stationLocation').innerText = channelInfo.name;
                     const mapUrl = `https://google.com{channelInfo.latitude},${channelInfo.longitude}`;
@@ -143,7 +146,6 @@
         });
     }
 
-    // تحديث الشاشة تلقائياً كل 15 ثانية
     fetchWeatherData();
     setInterval(fetchWeatherData, 15000);
 </script>
